@@ -40,7 +40,7 @@ zerosFromTo a b =
         between x0 x1 x | x0 < x1 = x > x0 && x < x1
         between x0 x1 x           = between x1 x0 x
     in
-        filter (between a b) $ map (\x -> 100 * x) ns
+        filter (between a b) $ map (* 100) ns
 
 
 part2 :: IO ()
@@ -50,7 +50,7 @@ part2 = do
     let result = scanl applyCode 50 $ lines input
     let zeros = drop 1 $ map (\x -> mod x 100) result
 
-    print $ zerosFromTo (-80) 200
+    --print $ zerosFromTo (-80) 200
 
     let innerClicks = map length $ zipWith zerosFromTo result (drop 1 result)
     let numEndClicks = length $ filter (== 0) zeros
