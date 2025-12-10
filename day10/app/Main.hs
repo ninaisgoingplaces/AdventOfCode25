@@ -11,7 +11,6 @@ import Data.List (subsequences)
 import Data.Foldable (foldl')
 
 
-
 main :: IO ()
 main = do
     part1
@@ -24,16 +23,11 @@ split e l =
           (f,ls) = span (/=e) l
 
 
-
 parts :: [a] -> (a, [a], a)
 parts xs =
     let l = length xs
     in
         (head xs, take (l-2) $ drop 1 xs, last xs)
-
-
-
-
 
 
 innerString :: String -> String
@@ -93,8 +87,8 @@ part1 = do
     let rows' = map (parts . split ' ') rows
 
 
-
     print $ sum $ map (solve . parseLine) rows'
+
 
 -- --------------------------
 
