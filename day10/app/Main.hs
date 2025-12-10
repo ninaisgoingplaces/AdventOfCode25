@@ -92,24 +92,7 @@ part1 = do
     rows <- lines <$> readFile "puzzle_input.txt"
     let rows' = map (parts . split ' ') rows
 
-    --let lights = map (\(x, _, _) -> x) rows'
 
-    --lights' <- mapM lightsTarget lights
-
-    --mapM_ printTarget lights'
-
-    --print $ head $ map parseLine rows'
-
-    -- print $ makeButtons "(0,3,4)"
-
-    --print $ addButtons [0,1,1] [1,1,0,0,1]
-
-    --let (target, buttons, _) = head $ map parseLine rows'
-    --print "Target"
-    --print target
-    --print "Buttons"
-    --print buttons
-    --print $ map length $ solveLine target buttons
 
     print $ sum $ map (solve . parseLine) rows'
 
