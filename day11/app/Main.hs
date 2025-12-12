@@ -3,8 +3,12 @@
 module Main where
 
 
-import Data.Map.Strict (Map, fromList, (!))
+import Data.Map.Strict (Map, fromList, (!), lookup, insert, empty)
 import Control.Monad (guard)
+import Prelude hiding (lookup)
+
+
+
 --import qualified Data.Set 
 
 
@@ -43,6 +47,8 @@ getPaths end mp dv path             =
           getPaths end mp dv' path'
 
 
+
+
 part1 :: IO ()
 part1 = do
     --rows <- lines <$> readFile "example.txt"
@@ -64,6 +70,33 @@ part1 = do
 
 -- --------------------------
 
+
+type Outlets = [String]
+type OutlMap = Map String [String]
+type Start = String
+type Goal = String
+type Path = [String]
+type PathLookup = Map (Start, Goal) [Path]
+
+
+gPs :: OutlMap -> PathLookup -> Outlets -> Goal -> (PathLookup, [Path])
+gPs _  plu []       _   = (plu, [])
+gPs _  plu (ol:_)   end | ol == end = (plu, [[end]])
+gPs mp plu (ol:ols) end = 
+    let (plu''', ps'') = case lookup (ol, end) plu of 
+                            Just ps -> (plu, ps)
+                            Nothing -> 
+                                let outs = mp ! ol
+                                    (plu', ps) = gPs mp plu outs end
+                                    ps' = map (\p -> ol:p) ps
+                                    plu'' = insert (ol, end) ps' plu' 
+                                in
+                                    (plu'', ps')
+        (plu'''', ps''') = gPs mp plu''' ols end
+    in
+        (plu'''', ps'' ++ ps''')
+
+
 part2 :: IO ()
 part2 = do
     --rows <- lines <$> readFile "example2.txt"
@@ -73,61 +106,20 @@ part2 = do
     --print kvs
     let mp = fromList kvs
 
-    -- -- first all beginning paths
-    -- let toSvr = mp ! "svr"
-    -- print toSvr
-    -- let startFFT = concatMap (\dst -> getPaths dst mp "fft" []) toSvr
-    -- print startFFT
+    let (_, ps1) = gPs mp empty ["svr"] "fft"
+    let n1 = length ps1
+    print n1
 
-    --let fft2dac = getPaths "dac" mp "fft" []
-    --print $ length fft2dac
+    let (_, ps2) = gPs mp empty ["fft"] "dac"
+    let n2 = length ps2
+    print n2
 
-    -- print $ length $ getPaths "fft" mp "dac" []
-    -- print $ length $ getPaths "dac" mp "fft" []
+    let (_, ps3) = gPs mp empty ["dac"] "out"
+    let n3 = length ps3
+    print n3
 
-    --print $ length $ getPaths "dac" mp "svr" ["fft"]
-
-    -- let svr2dac2fft2out = do p1 <- getPaths "dac" mp "svr" ["fft"]
-    --                          let p1' = take (length p1 - 1) p1
-    --                          --  p2 <- getPaths "fft" mp "dac" p1'
-    --                          --  getPaths "out" mp "fft" p2
-    --                          getPaths "fft" mp "dac" p1'
-    --                          --getPaths "out" mp "fft" p2
-
-    -- print $ length svr2dac2fft2out
-
-    -- we have to go through fft first?
-
-    let svr2fft2dac2out = do p1 <- getPaths "fft" mp "svr" []
-                             p2 <- getPaths "dac" mp "fft" p1                            
-                             getPaths "out" mp "dac" p2
-
-    print $ length svr2fft2dac2out
+    print $ n1 * n2 * n3
 
 
-
-    --print $ length svr2dac2fft2out + length svr2fft2dac2out
-
-    -- let toFFT = getPaths "fft" mp "svr" ["dac"]
-    -- print toFFT
-
-    -- let fromFttToDAC = concatMap (getPaths "dac" mp "fft") toFFT
-    -- print fromFttToDAC
-
-    --print mp
-
-    -- richtig:
-    -- let paths = getPaths "out" mp "svr" []
-    -- let paths' = filter (\p -> "fft" `elem` p && "dac" `elem` p) paths
-    -- print $ length paths'
-
-    -- let otherPaths = getPaths "out" mp "dac" []
-    -- print $ length otherPaths
-    -- print $ length $ Data.Set.fromList $ map Data.Set.fromList otherPaths
-
-    --let otherPaths' = getPaths "dac" mp "svr" []
-    --print $ length otherPaths'
-
-    --print rows
 
     putStrLn "ready"
