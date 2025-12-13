@@ -16,6 +16,7 @@ both :: (a -> b) -> (a, a) -> (b, b)
 both f (x, y) = (f x, f y)
 
 
+
 part1 :: IO ()
 part1 = do
     --rows <- lines <$> readFile "example.txt"
@@ -83,6 +84,11 @@ doSplit n xs = if (xs !! n) == '^' then [n-1, n+1] else [n]
 
 -- --------------------------
 
+type Position = Int
+type Path = [Position]
+type Row = String
+type TimeInterval = Int
+type ProbFrequency = Int
 
 part2 :: IO ()
 part2 = do
@@ -96,33 +102,55 @@ part2 = do
     print $ sum $ map snd $ withObsv 40 y rows
 
 
+{-
+    The particle starts at a vertical *Position* and runs qm-style through
+    the *[Row]*s of the apparatus. It is observed every *TimeInterval*
+    collapsing the wavefunction into a collection *[(ProbFrequency, Position)]* of
+    *Position*s with a *ProbFrequency*.
 
-
-withObsv :: Int -> Int -> [String] -> [(Int, Int)]
-withObsv n y0 rows = 
-    let res   = map head $ qRun (take n rows) [[y0]]
-        obsv  = counts res
-        rows' = drop n rows
+    The trick is, that every n Steps we completely forget about all the
+    multiple paths, that broughts us to a given y-Position and just
+    start the next part of the journey from y, but scaling the weight
+    of this y-Position with the number of paths, that ended in this position.
+    This way forgetting/weighting (=observing) is a way (nature's way?)
+    to deal with the time/space complexity of the problem.
+-}
+withObsv :: TimeInterval -> Position -> [Row] -> [(ProbFrequency, Position)]
+withObsv dt y0 rows = 
+    let res   = map head $ qRun y0 (take dt rows) -- only interested in the end-position of all paths
+        obsv  = counts res      -- counts :: Eq a => [a] -> [(a, Int)]
+        rows' = drop dt rows
     in 
         if 
             rows' /= [] 
         then
-            concatMap (\(y', prob) -> map (\(a,b) -> (a, b*prob)) $ withObsv n y' rows') obsv
+            concatMap (\(y', prob) -> map (\(a,b) -> (a, b*prob)) $ withObsv dt y' rows') obsv
         else 
             obsv
 
-
-qStep :: Int -> String -> [Int]
+{-
+    A particle travels one *Row* downwards starting at vertical *Position*.
+    As this is quantum mechanical this could lead to several timelines
+    given by *[Position]*
+-}
+qStep :: Position -> Row -> [Position]
 qStep y rs | rs !! y == '^' = [y-1, y+1]
 qStep y _                   = [y]
 
-type TachPath = [Int]
 
-qRun :: [String] -> [TachPath] -> [TachPath]
-qRun []     ps = ps
-qRun (r:rs) ps = do
-    p  <- ps
-    y' <- qStep (head p) r
-    let ps' = y':p
-    qRun rs [ps']
+{-
+    A complete quantum mechanical run of the next *[Row]*s of the apparatus
+    starting from *Position* y. We will return all possible paths
+    as *[[Position]]*.
+-}
+qRun :: Position -> [Row] -> [[Position]]
+qRun y []     = [[y]]
+qRun y (r:rs) = do
+    y' <- qStep y r
+    p  <- qRun y' rs
+    -- it would be more efficient to just return the endpoint
+    -- as this is only used in withObsv, but I wanted to make clear
+    -- what is happening physically here. And I don't think, that
+    -- it's such a large time waste, because the paths are not too large.
+    return $ p ++ [y']
 
